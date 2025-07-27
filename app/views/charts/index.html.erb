@@ -1,0 +1,164 @@
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <!-- Header -->
+    <div class="mb-6">
+      <%= link_to room_path(@room), class: "inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700" do %>
+        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Room
+      <% end %>
+    </div>
+
+    <div class="md:flex md:items-center md:justify-between mb-8">
+      <div class="flex-1 min-w-0">
+        <h1 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+          <%= @room.name %> - Scoreboard
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">
+          Track points for each round and player
+        </p>
+      </div>
+      <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+        <%= link_to new_room_chart_path(@room), class: "inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+          <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          </svg>
+          Record Points
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Total Scores Summary -->
+    <% if @room.show_total_point && @users_in_room.any? %>
+      <div class="bg-white shadow sm:rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Total Scores</h3>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <% @users_in_room.sort_by { |user_id, total_points| -total_points }.each do |user_id, total_points| %>
+              <% user = User.find(user_id) %>
+              <div class="bg-gray-50 rounded-lg px-4 py-3">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-8 w-8">
+                    <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                      <span class="text-xs font-medium text-white"><%= user.name.first.upcase %></span>
+                    </div>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900"><%= user.name %></p>
+                    <p class="text-lg font-bold <%= total_points >= 0 ? 'text-green-600' : 'text-red-600' %>">
+                      <%= total_points %> pts
+                    </p>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Rounds History -->
+    <% if @rounds.any? %>
+      <div class="space-y-6">
+        <% @rounds.sort.reverse_each do |round_number, charts| %>
+          <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+              <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                Round <%= round_number %>
+                <span class="text-sm text-gray-500 font-normal">
+                  (<%= charts.count %> record<%= charts.count == 1 ? '' : 's' %>)
+                </span>
+              </h3>
+
+              <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <table class="min-w-full divide-y divide-gray-300">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Player
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Rule Applied
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Points
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th scope="col" class="relative px-6 py-3">
+                        <span class="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <% charts.each do |chart| %>
+                      <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8">
+                              <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
+                                <span class="text-xs font-medium text-white"><%= chart.user.name.first.upcase %></span>
+                              </div>
+                            </div>
+                            <div class="ml-3">
+                              <div class="text-sm font-medium text-gray-900">
+                                <%= chart.user.name %>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= chart.rule.point_type == 'score' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                            <%= chart.rule.point_type.humanize %>
+                          </span>
+                          <div class="text-sm text-gray-500 mt-1">
+                            <%= chart.rule.description.presence || "#{chart.rule.point} point #{chart.rule.point_type}" %>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <span class="text-lg font-semibold <%= chart.point >= 0 ? 'text-green-600' : 'text-red-600' %>">
+                            <%= chart.point >= 0 ? '+' : '' %><%= chart.point %>
+                          </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <%= chart.created_at.strftime("%I:%M %p") %>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <%= link_to edit_chart_path(chart), class: "text-indigo-600 hover:text-indigo-900 mr-3" do %>
+                            Edit
+                          <% end %>
+                          <%= link_to chart_path(chart), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" },
+                              class: "text-red-600 hover:text-red-900" do %>
+                            Delete
+                          <% end %>
+                        </td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No rounds recorded</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by recording points for the first round.</p>
+        <div class="mt-6">
+          <%= link_to new_room_chart_path(@room), class: "inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Record First Round
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,185 @@
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+    <!-- Header -->
+    <div class="mb-6">
+      <%= link_to room_charts_path(@room), class: "inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700" do %>
+        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Scoreboard
+      <% end %>
+    </div>
+
+    <div class="bg-white shadow sm:rounded-lg">
+      <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-6">
+          Record Points - Round <%= @current_round %>
+        </h3>
+
+        <%= form_with model: [@room, @chart], local: true, class: "space-y-6" do |form| %>
+          <% if @chart.errors.any? %>
+            <div class="rounded-md bg-red-50 p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800">
+                    There were errors with your submission:
+                  </h3>
+                  <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                      <% @chart.errors.full_messages.each do |message| %>
+                        <li><%= message %></li>
+                      <% end %>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div>
+              <%= form.label :user_id, "Player", class: "block text-sm font-medium text-gray-700" %>
+              <div class="mt-1">
+                <%= form.select :user_id,
+                    options_from_collection_for_select(@users, :id, :name, @chart.user_id),
+                    { prompt: "Select a player" },
+                    { class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" } %>
+              </div>
+            </div>
+
+            <div>
+              <%= form.label :rule_id, "Rule", class: "block text-sm font-medium text-gray-700" %>
+              <div class="mt-1">
+                <%= form.select :rule_id,
+                    options_from_collection_for_select(@rules, :id,
+                      proc { |rule| "#{rule.description.presence || "#{rule.point} point #{rule.point_type}"} (#{rule.point_type == 'score' ? '+' : '-'}#{rule.point})" },
+                      @chart.rule_id),
+                    { prompt: "Select a rule" },
+                    { class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" } %>
+              </div>
+              <p class="mt-1 text-xs text-gray-500">Points will be calculated automatically based on the rule</p>
+            </div>
+
+            <div>
+              <%= form.label :round, class: "block text-sm font-medium text-gray-700" %>
+              <div class="mt-1">
+                <%= form.number_field :round,
+                    value: @current_round,
+                    class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md",
+                    min: 1 %>
+              </div>
+            </div>
+
+            <div>
+              <%= form.label :point, "Points (calculated)", class: "block text-sm font-medium text-gray-700" %>
+              <div class="mt-1">
+                <%= form.number_field :point,
+                    class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md bg-gray-50",
+                    readonly: true,
+                    placeholder: "Will be calculated based on rule" %>
+              </div>
+              <p class="mt-1 text-xs text-gray-500">This will be set automatically when you select a rule</p>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-3">
+            <%= link_to room_charts_path(@room),
+                class: "bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+              Cancel
+            <% end %>
+            <%= form.submit "Record Points",
+                class: "inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
+          </div>
+        <% end %>
+
+        <!-- Quick Round Completion -->
+        <% if @rules.any? %>
+          <div class="mt-8 pt-8 border-t border-gray-200">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Quick Round Completion</h4>
+            <p class="text-sm text-gray-600 mb-4">Record multiple points for this round at once:</p>
+
+            <%= form_with url: complete_round_room_charts_path(@room), local: true, class: "space-y-4" do |form| %>
+              <div id="round-completion-forms">
+                <div class="bg-gray-50 rounded-lg p-4">
+                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <select name="charts[][user_id]" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                      <option value="">Select Player</option>
+                      <% @users.each do |user| %>
+                        <option value="<%= user.id %>"><%= user.name %></option>
+                      <% end %>
+                    </select>
+
+                    <select name="charts[][rule_id]" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                      <option value="">Select Rule</option>
+                      <% @rules.each do |rule| %>
+                        <option value="<%= rule.id %>">
+                          <%= rule.description.presence || "#{rule.point} point #{rule.point_type}" %>
+                          (<%= rule.point_type == 'score' ? '+' : '-' %><%= rule.point %>)
+                        </option>
+                      <% end %>
+                    </select>
+
+                    <button type="button" onclick="removeRoundForm(this)" class="bg-red-100 text-red-700 px-3 py-2 rounded-md text-sm hover:bg-red-200">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex justify-between">
+                <button type="button" onclick="addRoundForm()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-200">
+                  Add Another Entry
+                </button>
+
+                <%= form.submit "Complete Round #{@current_round}",
+                    class: "inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function addRoundForm() {
+  const container = document.getElementById('round-completion-forms');
+  const template = container.querySelector('.bg-gray-50').cloneNode(true);
+
+  // Clear the values
+  template.querySelectorAll('select').forEach(select => select.value = '');
+
+  container.appendChild(template);
+}
+
+function removeRoundForm(button) {
+  const forms = document.querySelectorAll('#round-completion-forms .bg-gray-50');
+  if (forms.length > 1) {
+    button.closest('.bg-gray-50').remove();
+  }
+}
+
+// Auto-calculate points based on rule selection
+document.addEventListener('DOMContentLoaded', function() {
+  const ruleSelect = document.querySelector('#chart_rule_id');
+  const pointField = document.querySelector('#chart_point');
+
+  if (ruleSelect && pointField) {
+    ruleSelect.addEventListener('change', function() {
+      if (this.value) {
+        // You would need to fetch rule data via AJAX or embed it in the page
+        // For now, we'll leave this as a placeholder
+        pointField.value = 'Will be calculated on save';
+      } else {
+        pointField.value = '';
+      }
+    });
+  }
+});
+</script>

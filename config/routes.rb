@@ -3,9 +3,18 @@ Rails.application.routes.draw do
 
   # User routes
   resources :users
-  
+
   # Room routes
-  resources :rooms
+  resources :rooms do
+    resources :charts do
+      collection do
+        post :complete_round
+      end
+    end
+  end
+
+  # Chart routes (for individual chart management)
+  resources :charts, only: [ :show, :edit, :update, :destroy ]
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
