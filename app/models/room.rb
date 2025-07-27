@@ -2,6 +2,8 @@ class Room < ApplicationRecord
   belongs_to :user
   has_many :charts, dependent: :destroy
   has_many :rules, dependent: :destroy
+  has_many :room_users, dependent: :destroy
+  has_many :participants, through: :room_users, source: :user
 
   enum :room_type, { standard: 0, custom: 1 }
 

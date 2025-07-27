@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_26_123244) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_27_132101) do
   create_table "charts", force: :cascade do |t|
     t.integer "point", default: 0, null: false
     t.integer "round", default: 0, null: false
@@ -22,6 +22,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_26_123244) do
     t.index ["room_id"], name: "index_charts_on_room_id"
     t.index ["rule_id"], name: "index_charts_on_rule_id"
     t.index ["user_id"], name: "index_charts_on_user_id"
+  end
+
+  create_table "room_users", force: :cascade do |t|
+    t.integer "room_id", null: false
+    t.integer "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["room_id", "user_id"], name: "index_room_users_on_room_id_and_user_id", unique: true
+    t.index ["room_id"], name: "index_room_users_on_room_id"
+    t.index ["user_id"], name: "index_room_users_on_user_id"
   end
 
   create_table "rooms", force: :cascade do |t|
@@ -60,6 +70,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_26_123244) do
   add_foreign_key "charts", "rooms"
   add_foreign_key "charts", "rules"
   add_foreign_key "charts", "users"
+  add_foreign_key "room_users", "rooms"
+  add_foreign_key "room_users", "users"
   add_foreign_key "rooms", "charts"
   add_foreign_key "rooms", "rules"
   add_foreign_key "rooms", "users"

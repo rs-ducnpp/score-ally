@@ -69,6 +69,18 @@ rules << Rule.find_or_create_by!(room: quick_match_room, point_type: "score", po
 end
 
 # Create sample chart data (game history)
+# First, add participants to rooms
+game_night_room.room_users.find_or_create_by(user: users[0])
+game_night_room.room_users.find_or_create_by(user: users[1])
+game_night_room.room_users.find_or_create_by(user: users[2])
+
+tournament_room.room_users.find_or_create_by(user: users[1])
+tournament_room.room_users.find_or_create_by(user: users[3])
+
+quick_match_room.room_users.find_or_create_by(user: users[0])
+quick_match_room.room_users.find_or_create_by(user: users[2])
+quick_match_room.room_users.find_or_create_by(user: users[3])
+
 # Game Night Room - Round 1
 Chart.find_or_create_by!(user: users[0], room: game_night_room, rule: rules[0], round: 1) do |chart|
   chart.point = 10

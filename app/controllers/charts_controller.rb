@@ -1,6 +1,6 @@
 class ChartsController < ApplicationController
   before_action :set_chart, only: [ :show, :edit, :update, :destroy ]
-  before_action :set_room, only: [ :index, :new, :create ]
+  before_action :set_room, only: [ :index, :new, :create, :complete_round ]
 
   # GET /rooms/:room_id/charts
   def index
@@ -16,51 +16,54 @@ class ChartsController < ApplicationController
   # GET /rooms/:room_id/charts/new
   def new
     @chart = @room.charts.build
-    @users = User.all
-    @rules = @room.rules
-    @current_round = (@room.charts.maximum(:round) || 0) + 1
+    setup_form_variables
+
+    if @room.participants.empty?
+      redirect_to @room, alert: "Please add participants to this room before recording points."
+    end
   end
 
   # GET /charts/1/edit
   def edit
     @room = @chart.room
-    @users = User.all
-    @rules = @room.rules
+    setup_form_variables
   end
 
   # POST /rooms/:room_id/charts
   def create
     @chart = @room.charts.build(chart_params)
 
-    # Let the model handle point calculation
-    if @chart.save
+    if valid_participant?(@chart.user) && @chart.save
       redirect_to room_charts_path(@room), notice: "Point record was successfully created."
     else
-      @users = User.all
-      @rules = @room.rules
-      @current_round = (@room.charts.maximum(:round) || 0) + 1
+      add_participant_error unless valid_participant?(@chart.user)
+      setup_form_variables
       render :new, status: :unprocessable_entity
     end
   end
 
   # POST /rooms/:room_id/charts/complete_round
   def complete_round
-    @room = Room.find(params[:room_id])
-    @current_round = (@room.charts.maximum(:round) || 0) + 1
+    @current_round = next_round_number
 
-    # Get the submitted chart data
     charts_data = params[:charts] || []
+
+    if charts_data.empty?
+      redirect_to room_charts_path(@room), alert: "No chart data provided."
+      return
+    end
 
     ActiveRecord::Base.transaction do
       charts_data.each do |chart_data|
         next if chart_data[:user_id].blank? || chart_data[:rule_id].blank?
 
-        chart = @room.charts.build(
+        validate_participant_for_round!(chart_data[:user_id])
+
+        @room.charts.create!(
           user_id: chart_data[:user_id],
           rule_id: chart_data[:rule_id],
           round: @current_round
         )
-        chart.save! # This will trigger the automatic point calculation
       end
     end
 
@@ -71,12 +74,14 @@ class ChartsController < ApplicationController
 
   # PATCH/PUT /charts/1
   def update
-    if @chart.update(chart_params)
+    @room = @chart.room
+    user_id = chart_params[:user_id]&.to_i
+
+    if user_id && valid_participant_id?(user_id) && @chart.update(chart_params)
       redirect_to @chart, notice: "Chart was successfully updated."
     else
-      @room = @chart.room
-      @users = User.all
-      @rules = @room.rules
+      add_participant_error unless valid_participant_id?(user_id)
+      setup_form_variables
       render :edit, status: :unprocessable_entity
     end
   end
@@ -102,15 +107,31 @@ class ChartsController < ApplicationController
     params.require(:chart).permit(:round, :user_id, :rule_id)
   end
 
-  def calculate_points(rule_id, point_type)
-    rule = Rule.find(rule_id)
-    case rule.point_type
-    when "score"
-      rule.point
-    when "penalty"
-      -rule.point
-    else
-      0
+  def setup_form_variables
+    @users = @room.participants
+    @rules = @room.rules
+    @current_round = next_round_number
+  end
+
+  def next_round_number
+    (@room.charts.maximum(:round) || 0) + 1
+  end
+
+  def valid_participant?(user)
+    user && @room.participants.include?(user)
+  end
+
+  def valid_participant_id?(user_id)
+    user_id && @room.participants.pluck(:id).include?(user_id)
+  end
+
+  def add_participant_error
+    @chart.errors.add(:user, "must be a participant in this room")
+  end
+
+  def validate_participant_for_round!(user_id)
+    unless @room.participants.pluck(:id).include?(user_id.to_i)
+      raise ActiveRecord::RecordInvalid.new(Chart.new), "User must be a participant in this room"
     end
   end
 end

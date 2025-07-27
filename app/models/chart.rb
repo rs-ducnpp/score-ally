@@ -5,6 +5,7 @@ class Chart < ApplicationRecord
 
   validates :point, presence: true, numericality: true
   validates :round, presence: true, numericality: { greater_than: 0 }
+  validate :user_must_be_participant
 
   before_save :calculate_points_from_rule
 
@@ -18,6 +19,14 @@ class Chart < ApplicationRecord
       self.point = rule.point
     when "penalty"
       self.point = -rule.point
+    end
+  end
+
+  def user_must_be_participant
+    return unless user && room
+
+    unless room.participants.include?(user)
+      errors.add(:user, "must be a participant in this room")
     end
   end
 end

@@ -45,7 +45,7 @@
             <div class="sm:col-span-2">
               <%= form.label :name, class: "block text-sm font-medium text-gray-700" %>
               <div class="mt-1">
-                <%= form.text_field :name, 
+                <%= form.text_field :name,
                     class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md",
                     placeholder: "Enter room name" %>
               </div>
@@ -54,7 +54,7 @@
             <div>
               <%= form.label :user_id, "Owner", class: "block text-sm font-medium text-gray-700" %>
               <div class="mt-1">
-                <%= form.select :user_id, 
+                <%= form.select :user_id,
                     options_from_collection_for_select(@users, :id, :name, @room.user_id),
                     { prompt: "Select an owner" },
                     { class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" } %>
@@ -64,7 +64,7 @@
             <div>
               <%= form.label :room_type, class: "block text-sm font-medium text-gray-700" %>
               <div class="mt-1">
-                <%= form.select :room_type, 
+                <%= form.select :room_type,
                     options_for_select([['Standard', 'standard'], ['Custom', 'custom']], @room.room_type),
                     { prompt: "Select room type" },
                     { class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" } %>
@@ -74,7 +74,7 @@
             <div>
               <%= form.label :limit_point, "Point Limit", class: "block text-sm font-medium text-gray-700" %>
               <div class="mt-1">
-                <%= form.number_field :limit_point, 
+                <%= form.number_field :limit_point,
                     class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md",
                     placeholder: "Optional point limit",
                     min: 1 %>
@@ -84,7 +84,7 @@
             <div>
               <%= form.label :limit_round, "Round Limit", class: "block text-sm font-medium text-gray-700" %>
               <div class="mt-1">
-                <%= form.number_field :limit_round, 
+                <%= form.number_field :limit_round,
                     class: "shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md",
                     placeholder: "Optional round limit",
                     min: 1 %>
@@ -94,7 +94,7 @@
             <div class="sm:col-span-2">
               <div class="relative flex items-start">
                 <div class="flex items-center h-5">
-                  <%= form.check_box :show_total_point, 
+                  <%= form.check_box :show_total_point,
                       class: "focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" %>
                 </div>
                 <div class="ml-3 text-sm">
@@ -103,14 +103,33 @@
                 </div>
               </div>
             </div>
+
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Room Participants</label>
+              <div class="mt-1 space-y-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-3">
+                <% @users.each do |user| %>
+                  <div class="relative flex items-start">
+                    <div class="flex items-center h-5">
+                      <%= check_box_tag "room[participant_ids][]", user.id, false,
+                          class: "focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded",
+                          id: "participant_#{user.id}" %>
+                    </div>
+                    <div class="ml-3 text-sm">
+                      <%= label_tag "participant_#{user.id}", user.name, class: "font-medium text-gray-700" %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+              <p class="mt-1 text-xs text-gray-500">Select users who can participate in this room.</p>
+            </div>
           </div>
 
           <div class="flex justify-end space-x-3">
-            <%= link_to rooms_path, 
+            <%= link_to rooms_path,
                 class: "bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
               Cancel
             <% end %>
-            <%= form.submit "Create Room", 
+            <%= form.submit "Create Room",
                 class: "inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" %>
           </div>
         <% end %>
