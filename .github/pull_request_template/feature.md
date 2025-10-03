@@ -1,5 +1,5 @@
 # .github/pull_request_template/feature.md
-## Feature Description
+## ✨ Feature Description
 <!-- What feature does this PR add? -->
 
 ## User Story
